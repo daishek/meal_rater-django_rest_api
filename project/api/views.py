@@ -1,25 +1,37 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
-from .serializers import MealSerialzer, RatingSerializer
+from .serializers import MealSerialzer, RatingSerializer, UserSerializer
 from .models import Meal, Rating
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
 
 class MealViewSet(viewsets.ModelViewSet):
     queryset = Meal.objects.all()
     serializer_class = MealSerialzer
+
+    authentication_classes = {TokenAuthentication}
+    permission_classes = {IsAuthenticated}
+    
     # Extra actions
     @action(methods={'post'}, detail=True)
     def rate_meal(self, request, pk=None):
         if 'rate' in request.data:
             """Create or Update"""
             meal = Meal.objects.get(pk=pk)
-            username = request.data['username']
-            user = User.objects.get(username=username)
+            # username = request.data['username']
+            # user = User.objects.get(username=username)
+            user = request.user
+            print('user', user)
             rate = request.data['rate']
             try:
                 # update
@@ -55,3 +67,17 @@ class MealViewSet(viewsets.ModelViewSet):
 class RatingViewSet(viewsets.ModelViewSet):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
+
+    authentication_classes = {TokenAuthentication}
+    permission_classes = {IsAuthenticated}
+
+    def update(self, request, *args, **kargs):
+        response = {
+            'message': "request denied"
+        }
+        return Response(response, status=status.HTTP_406_NOT_ACCEPTABLE)
+    def create(self, request, *args, **kargs):
+        response = {
+            'message': "request denied"
+        }
+        return Response(response, status=status.HTTP_406_NOT_ACCEPTABLE)
